@@ -1,7 +1,10 @@
-import numpy as np
-from sklearn.preprocessing import StandardScaler
+# classical ML training for both tasks
 
-import data
+import numpy as np
+# from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, Normalizer, PowerTransformer
+
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -15,61 +18,34 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import cross_val_score
 import seaborn as sns
+from features import *
+from data import *
+from imblearn.over_sampling import SMOTE
+
+RANDOM_STATE = 42
 
 
-def linear_regression():
-    csv_data = data.load_data()
-    feature_cols = ["hour", "DEWP", "TEMP", "PRES", "Iws", "Is", "Ir"]
-
-    X = csv_data[feature_cols]
-    scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
-    y = csv_data["pm2.5"]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-
-    linreg = LinearRegression()
+def linear_regression(X_train, X_test, y_train, y_test):
+    linreg = Pipeline([('scaler', StandardScaler()), ('rgs', LinearRegression())])
     linreg.fit(X_train, y_train)
 
-    y_pred = linreg.predict(X_test)
+    # y_pred = linreg.predict(X_test)
 
-    # MAE on validation
-    validation_mae = cross_val_score(linreg, X_train, y_train, cv=10, scoring="neg_mean_absolute_error")
-    print("Linear regression validation MAE: ", validation_mae.mean())
+    # # Residuals vs predicted
+    # residuals = y_test - y_pred
+    #
+    # plt.figure()
+    # plt.scatter(y_pred, residuals, color='blue', alpha=0.3)
+    # plt.axhline(y=0, color='red', linestyle='--')
+    # plt.xlabel("Predicted Values")
+    # plt.ylabel("Residuals")
+    # plt.title("Residuals vs Predicted Values of Linear Regression Model")
+    # plt.show()
 
-    # RMSE on validation
-    validation_rmse = cross_val_score(linreg, X_train, y_train, cv=10, scoring="neg_root_mean_squared_error")
-    print("Linear regression validation RMSE: ", validation_rmse.mean())
+    return linreg
 
-    # MAE on test
-    mae = metrics.mean_absolute_error(y_test, y_pred)
-    print("Linear regression test MAE: ", mae)
-
-    # RMSE on test
-    rmse = root_mean_squared_error(y_test, y_pred)
-    print("Linear regression test RMSE: ", rmse)
-
-    # Residuals vs predicted
-    residuals = y_test - y_pred
-
-    plt.figure()
-    plt.scatter(y_pred, residuals, color='blue', alpha=0.3)
-    plt.axhline(y=0, color='red', linestyle='--')
-    plt.xlabel("Predicted Values")
-    plt.ylabel("Residuals")
-    plt.title("Residuals vs Predicted Values of Linear Regression Model")
-    plt.show()
-
-def naive_bayes():
-    csv_data = data.load_data()
-    feature_cols = ["hour", "DEWP", "TEMP", "PRES", "Iws", "Is", "Ir"]
-    X = csv_data[feature_cols]
-    scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
-    y = csv_data["class"]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    gnb = GaussianNB()
+def naive_bayes(X_train, X_test, y_train, y_test):
+    gnb = Pipeline([('scaler', StandardScaler()), ('normalizer', Normalizer()), ('transformer', PowerTransformer(method='yeo-johnson')), ('clf', GaussianNB())])
     gnb.fit(X_train, y_train)
 
     # Accuracy on validation
@@ -89,49 +65,16 @@ def naive_bayes():
     test_roc_auc = roc_auc_score(y_test, y_pred)
     print("Naive Bayes test AUC: ", test_roc_auc)
 
-def decision_tree_regression():
-    csv_data = data.load_data()
-    feature_cols = ["hour", "DEWP", "TEMP", "PRES", "Iws", "Is", "Ir"]
-    X = csv_data[feature_cols]
-    scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
-    y = csv_data["pm2.5"]
+    return gnb
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dt_reg = DecisionTreeRegressor()
+def decision_tree_regression(X_train, X_test, y_train, y_test):
+    dt_reg = Pipeline([('scaler', StandardScaler()), ('rgs', DecisionTreeRegressor(max_depth=10, random_state=RANDOM_STATE))])
     dt_reg.fit(X_train, y_train)
 
-    # MAE on validation
-    validation_accuracy = cross_val_score(dt_reg, X_train, y_train, cv=10, scoring="neg_mean_absolute_error")
-    print("Decision tree regression validation accuracy: ", validation_accuracy.mean())
+    return dt_reg
 
-    # RMSE on validation
-    validation_roc_auc = cross_val_score(dt_reg, X_train, y_train, cv=10, scoring="neg_root_mean_squared_error")
-    print("Decision tree validation RMSE: ", validation_roc_auc.mean())
-
-    y_pred = dt_reg.predict(X_test)
-    print(y_pred[:10])
-
-    # MAE on test
-    mae = metrics.mean_absolute_error(y_test, y_pred)
-    print(mae)
-    print("Decision tree test MAE: ", mae)
-
-    # RMSE on test
-    rmse = root_mean_squared_error(y_test, y_pred)
-    print(rmse)
-    print("Decision tree test RMSE: ", rmse)
-
-def decision_tree_classification():
-    csv_data = data.load_data()
-    feature_cols = ["hour", "DEWP", "TEMP", "PRES", "Iws", "Is", "Ir"]
-    X = csv_data[feature_cols]
-    scaler = StandardScaler()
-    X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns, index=X.index)
-    y = csv_data["class"]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    dtc = DecisionTreeClassifier(max_depth=5, random_state=1)
+def decision_tree_classification(X_train, X_test, y_train, y_test):
+    dtc = Pipeline([('scaler', StandardScaler()), ('resampler', SMOTE(random_state=RANDOM_STATE)), ('clf', DecisionTreeClassifier(criterion='gini', max_depth=10, random_state=RANDOM_STATE))])
     dtc.fit(X_train, y_train)
 
     # Accuracy on validation
@@ -160,8 +103,12 @@ def decision_tree_classification():
     plt.title("Confusion Matrix of Decision Tree Classifier")
     plt.show()
 
+    return dtc
+
 if __name__ == '__main__':
-    linear_regression()
-    decision_tree_regression()
-    naive_bayes()
-    decision_tree_classification()
+    X_train, X_test, y_reg_train, y_reg_test, y_class_train, y_class_test = split_data()
+
+    linear_regression(X_train, X_test, y_reg_train, y_reg_test)
+    # decision_tree_regression(X_train, X_test, y_train, y_test)
+    # naive_bayes(X_train, X_test, y_class_train, y_class_test)
+    # decision_tree_classification(X_train, X_test, y_class_train, y_class_test)

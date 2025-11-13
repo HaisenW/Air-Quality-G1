@@ -1,20 +1,44 @@
-import csv
+# loading, cleaning, splitting
 
+import csv
 import pandas as pd
 from pandas import read_csv
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
+from features import *
+
+RANDOM_STATE = 42
 
 def load_data():
     air_quality_filename = '../data/PRSA_data_2010.1.1-2014.12.31.csv'
     data = read_csv(air_quality_filename, index_col=0)
     data = data[data['pm2.5'].notna()]
+    data = data.reset_index()
 
-    data['class'] = data['pm2.5'].apply(lambda x: 0 if x <= 150 else 1)
+    # tagging instances to good and unhealthy
+    data = classify_instances(data)
+
+    # encode cbwd to number
+    data = encode_wind_direction(data)
 
     return data
+
+def split_data():
+    data = load_data()
+    feature_cols = ["hour", "DEWP", "TEMP", "PRES", "Iws", "Is", "Ir", "cbwd_NE", "cbwd_NW", "cbwd_SE", "cbwd_cv"]
+
+    X = data[feature_cols]
+    y_reg = data["pm2.5"]
+    y_class = data["class"]
+
+    X_train, X_test, y_reg_train, y_reg_test = train_test_split(X, y_reg, test_size=0.3,random_state=RANDOM_STATE)
+    y_class_train = y_class.loc[y_reg_train.index]
+    y_class_test = y_class.loc[y_reg_test.index]
+
+    return (X_train, X_test, y_reg_train, y_reg_test, y_class_train, y_class_test)
 
 def distri_class(data):
     data: pd.DataFrame
@@ -41,6 +65,6 @@ def correlation_matrix(data):
 
 
 if __name__ == '__main__':
-    load_data()
+    data = load_data()
     # distri_class(load_data())
-    correlation_matrix(load_data())
+    # correlation_matrix(load_data())
