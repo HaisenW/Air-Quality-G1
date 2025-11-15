@@ -80,6 +80,13 @@ def evaluate_model(name, model, X_train, y_train, X_test, y_test, target_names):
 
     m = compute_metrics(y_test, y_pred, y_score)
     print(f"{name} metrics")
+
+    # Cross Validation scores
+    validation_accuracy = cross_val_score(model, X_train, y_train, cv=10, scoring="accuracy")
+    validation_roc_auc = cross_val_score(model, X_train, y_train, cv=10, scoring="roc_auc")
+    print("CV accuracy: " + f"{validation_accuracy.mean():.4f}")
+    print("CV roc_auc: " + f"{validation_roc_auc.mean():.4f}")
+
     for k, v in m.items():
         print(f"{k}: {v:.4f}")
 
@@ -91,7 +98,7 @@ def evaluate_model(name, model, X_train, y_train, X_test, y_test, target_names):
 
 
 # regression metrics
-def compute_reg_metrics(model, X_train, y_train, y_test):
+def compute_reg_metrics(model, X_train, X_test, y_train, y_test):
     y_pred = model.predict(X_test)
 
     # MAE on validation
@@ -112,11 +119,35 @@ def compute_reg_metrics(model, X_train, y_train, y_test):
 
     return m
 
+def plot_reg(model, X_test, y_test, name):
+    y_pred = model.predict(X_test)
+
+    # Residuals vs predicted
+    residuals = y_test - y_pred
+
+    plt.figure()
+    plt.scatter(y_pred, residuals, color='blue', alpha=0.3)
+    plt.axhline(y=0, color='red', linestyle='--')
+    plt.xlabel("Predicted Values")
+    plt.ylabel("Residuals")
+    plt.title("Residuals vs Predicted Values of " + name + " Model")
+    plt.show()
+
 if __name__ == '__main__':
     X_train, X_test, y_reg_train, y_reg_test, y_class_train, y_class_test = split_data()
+    #
+    # linear_reg_model = linear_regression(X_train, X_test, y_reg_train, y_reg_test)
+    # print(compute_reg_metrics(linear_reg_model, X_train, X_test, y_reg_train, y_reg_test))
+    # plot_reg(linear_reg_model, X_test, y_reg_test, "Linear Regression")
+    #
+    # decision_tree_model = decision_tree_regression(X_train, X_test, y_reg_train, y_reg_test)
+    # print(compute_reg_metrics(decision_tree_model, X_train, X_test, y_reg_train, y_reg_test))
+    # plot_reg(decision_tree_model, X_test, y_reg_test, "Decision Tree Regression")
 
-    linear_reg_model = linear_regression(X_train, X_test, y_reg_train, y_reg_test)
-    print(compute_reg_metrics(linear_reg_model, X_train, y_reg_train, y_reg_test))
+    class_target = ['Good', 'Unhealthy']
 
-    decision_tree_model = decision_tree_regression(X_train, X_test, y_reg_train, y_reg_test)
-    print(compute_reg_metrics(decision_tree_model, X_train, y_reg_train, y_reg_test))
+    gnb = naive_bayes(X_train, X_test, y_class_train, y_class_test)
+    evaluate_model("Naive Bayes", gnb, X_train, y_class_train, X_test, y_class_test, class_target)
+
+    dtc= decision_tree_classification(X_train, X_test, y_class_train, y_class_test)
+    evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
