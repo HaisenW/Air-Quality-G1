@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from train_baselines import *
+from train_nn import *
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score, roc_auc_score,
     confusion_matrix, RocCurveDisplay, PrecisionRecallDisplay, mean_absolute_error,
@@ -135,19 +136,31 @@ def plot_reg(model, X_test, y_test, name):
 
 if __name__ == '__main__':
     X_train, X_test, y_reg_train, y_reg_test, y_class_train, y_class_test = split_data()
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.fit_transform(X_test)
+
     #
-    # linear_reg_model = linear_regression(X_train, X_test, y_reg_train, y_reg_test)
+    # linear_reg_model = linear_regression(X_train, y_reg_train)
     # print(compute_reg_metrics(linear_reg_model, X_train, X_test, y_reg_train, y_reg_test))
     # plot_reg(linear_reg_model, X_test, y_reg_test, "Linear Regression")
     #
-    # decision_tree_model = decision_tree_regression(X_train, X_test, y_reg_train, y_reg_test)
+    # decision_tree_model = decision_tree_regression(X_train, y_reg_train)
     # print(compute_reg_metrics(decision_tree_model, X_train, X_test, y_reg_train, y_reg_test))
     # plot_reg(decision_tree_model, X_test, y_reg_test, "Decision Tree Regression")
-
+    #
     class_target = ['Good', 'Unhealthy']
+    #
+    # gnb = naive_bayes(X_train, y_class_train)
+    # evaluate_model("Naive Bayes", gnb, X_train, y_class_train, X_test, y_class_test, class_target)
+    #
+    # dtc= decision_tree_classification(X_train, y_class_train)
+    # evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
 
-    gnb = naive_bayes(X_train, X_test, y_class_train, y_class_test)
-    evaluate_model("Naive Bayes", gnb, X_train, y_class_train, X_test, y_class_test, class_target)
+    # mlp_reg_model = nn_reg_model(X_train, y_reg_train)
+    # print(compute_reg_metrics(mlp_reg_model, X_train, X_test, y_reg_train, y_reg_test))
+    # plot_reg(mlp_reg_model, X_test, y_reg_test, "NN Regression")
 
-    dtc= decision_tree_classification(X_train, X_test, y_class_train, y_class_test)
-    evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
+    mlp_class_model = nn_class_model(X_train, y_class_train)
+    # evaluate_model("NN Classification", mlp_class_model, X_train, y_class_train, X_test, y_class_test, class_target)
