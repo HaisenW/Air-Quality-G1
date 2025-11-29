@@ -1,2 +1,7 @@
 # Air-Quality-G1
-For CS-4120 Project
+This is the repository for a Machine Learning project.
+
+# How To Use
+Clone the git repository.
+
+WIP.
