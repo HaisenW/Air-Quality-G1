@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import colors
+
 from train_baselines import *
 from train_nn import *
 from sklearn.metrics import (
@@ -121,7 +123,7 @@ def compute_reg_metrics(model, X_train, X_test, y_train, y_test):
     return m
 
 def plot_reg(model, X_test, y_test, name):
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test).flatten()
 
     # Residuals vs predicted
     residuals = y_test - y_pred
@@ -134,6 +136,42 @@ def plot_reg(model, X_test, y_test, name):
     plt.title("Residuals vs Predicted Values of " + name + " Model")
     plt.show()
 
+# nn metrics
+def plot_loss(history, label, color):
+    # Use a log scale on y-axis to show the wide range of values.
+    plt.semilogy(history.epoch, history.history['loss'],
+               color=color, label='Train ' + label)
+    plt.semilogy(history.epoch, history.history['val_loss'],
+               color=color, label='Val ' + label,
+               linestyle="--")
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+def plot_cm(labels, predictions, threshold=0.5):
+    cm = confusion_matrix(labels, predictions > threshold)
+    plt.figure(figsize=(5,5))
+    sns.heatmap(cm, annot=True, fmt="d")
+    plt.title('Confusion matrix @{:.2f}'.format(threshold))
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+
+def compute_nn_reg_metrics(model, X_test, y_test):
+    y_pred = model.predict(X_test).flatten()
+
+    # MAE on test
+    mae = mean_absolute_error(y_test, y_pred)
+    # RMSE on test
+    rmse = root_mean_squared_error(y_test, y_pred)
+
+    m = {
+        "test_mae": mae,
+        "test_rmse": rmse
+    }
+
+    return m
+
 if __name__ == '__main__':
     X_train, X_test, y_reg_train, y_reg_test, y_class_train, y_class_test = split_data()
 
@@ -141,26 +179,52 @@ if __name__ == '__main__':
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.fit_transform(X_test)
 
-    #
-    # linear_reg_model = linear_regression(X_train, y_reg_train)
-    # print(compute_reg_metrics(linear_reg_model, X_train, X_test, y_reg_train, y_reg_test))
-    # plot_reg(linear_reg_model, X_test, y_reg_test, "Linear Regression")
-    #
-    # decision_tree_model = decision_tree_regression(X_train, y_reg_train)
-    # print(compute_reg_metrics(decision_tree_model, X_train, X_test, y_reg_train, y_reg_test))
-    # plot_reg(decision_tree_model, X_test, y_reg_test, "Decision Tree Regression")
-    #
+    # Linear Regression
+    linear_reg_model = linear_regression(X_train, y_reg_train)
+    print(compute_reg_metrics(linear_reg_model, X_train, X_test, y_reg_train, y_reg_test))
+    plot_reg(linear_reg_model, X_test, y_reg_test, "Linear Regression")
+
+    # Decision Tree Regression
+    decision_tree_model = decision_tree_regression(X_train, y_reg_train)
+    print(compute_reg_metrics(decision_tree_model, X_train, X_test, y_reg_train, y_reg_test))
+    plot_reg(decision_tree_model, X_test, y_reg_test, "Decision Tree Regression")
+
     class_target = ['Good', 'Unhealthy']
-    #
-    # gnb = naive_bayes(X_train, y_class_train)
-    # evaluate_model("Naive Bayes", gnb, X_train, y_class_train, X_test, y_class_test, class_target)
-    #
-    # dtc= decision_tree_classification(X_train, y_class_train)
-    # evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
 
-    # mlp_reg_model = nn_reg_model(X_train, y_reg_train)
-    # print(compute_reg_metrics(mlp_reg_model, X_train, X_test, y_reg_train, y_reg_test))
-    # plot_reg(mlp_reg_model, X_test, y_reg_test, "NN Regression")
+    # Naive Bayes Classification
+    gnb = naive_bayes(X_train, y_class_train)
+    evaluate_model("Naive Bayes", gnb, X_train, y_class_train, X_test, y_class_test, class_target)
 
-    mlp_class_model = nn_class_model(X_train, y_class_train)
-    # evaluate_model("NN Classification", mlp_class_model, X_train, y_class_train, X_test, y_class_test, class_target)
+    # Decision Tree Classification
+    dtc= decision_tree_classification(X_train, y_class_train)
+    evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
+
+    # NN Regression
+    nn_reg_model, nn_reg_history = nn_reg_model(X_train, y_reg_train)
+    plot_loss(nn_reg_history, "NN regression", 'blue')
+    plot_reg(nn_reg_model, X_test_scaled, y_reg_test, "NN Regression")
+    best_epoch = np.argmin(nn_reg_history.history['val_loss'])
+    nn_reg_metrics = {
+        'train_mae': nn_reg_history.history['mae'][best_epoch],
+        'train_rmse': nn_reg_history.history['root_mean_squared_error'][best_epoch],
+        'val_mae': nn_reg_history.history['val_mae'][best_epoch],
+        'val_rmse': nn_reg_history.history['val_root_mean_squared_error'][best_epoch]
+    }
+    print(nn_reg_metrics)
+    print(compute_nn_reg_metrics(nn_reg_model, X_test_scaled, y_reg_test))
+
+    # NN Classification
+    nn_class_model, nn_class_history = nn_class_model(X_train, y_class_train)
+    plot_loss(nn_class_history, "NN classification", 'red')
+    best_epoch = np.argmin(nn_class_history.history['val_loss'])
+    nn_class_metrics = {
+        'train_accuracy': nn_class_history.history['accuracy'][best_epoch],
+        'train_auc': nn_class_history.history['auc'][best_epoch],
+        'val_accuracy': nn_class_history.history['val_accuracy'][best_epoch],
+        'val_auc': nn_class_history.history['val_auc'][best_epoch]
+    }
+    print(nn_class_metrics)
+    y_pred_prob = nn_class_model.predict(X_test_scaled).flatten()
+    y_pred = (y_pred_prob >= 0.5).astype(int)
+    plot_confusion(y_class_test, y_pred, class_target)
+    print(compute_metrics(y_class_test, y_pred, y_pred_prob))

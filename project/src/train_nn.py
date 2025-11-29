@@ -9,14 +9,6 @@ import tensorflow as tf
 RANDOM_STATE = 42
 
 def nn_reg_model(X_train, y_train):
-    # mlp_reg = Pipeline([('scaler', StandardScaler()),
-    #                 ('rgs', MLPRegressor(hidden_layer_sizes=(16,),
-    #                                      activation='logistic',
-    #                                      random_state=RANDOM_STATE,
-    #                                      learning_rate_init=0.001))])
-    # mlp_reg.fit(X_train, y_train)
-    #
-    # return mlp_reg
     tf.random.set_seed(RANDOM_STATE)
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=RANDOM_STATE)
@@ -34,30 +26,22 @@ def nn_reg_model(X_train, y_train):
         tf.keras.layers.Dropout(0.2),
 
         tf.keras.layers.Dense(32, activation='relu', name="dense_layer3", kernel_regularizer=tf.keras.regularizers.l2(1e-4)),
+        tf.keras.layers.Dropout(0.2),
 
         tf.keras.layers.Dense(1, name="output_layer")
     ])
     model.compile(loss=tf.keras.losses.mae,
                   optimizer="adam",
-                  metrics=['mae'])
+                  metrics=['mae', 'root_mean_squared_error'])
     early_stop = tf.keras.callbacks.EarlyStopping(
         patience=10,
         restore_best_weights=True
     )
-    model.fit(X_train_scaled, y_train, epochs=200, batch_size=32, callbacks=[early_stop], validation_data=(X_val_scaled, y_val))
+    history = model.fit(X_train_scaled, y_train, epochs=200, batch_size=32, callbacks=[early_stop], validation_data=(X_val_scaled, y_val))
 
-    return model
+    return model, history
 
 def nn_class_model(X_train, y_train):
-    # mlp_class = Pipeline([('scaler', StandardScaler()),
-    #                         ('resampler', SMOTE(random_state=RANDOM_STATE)),
-    #                         ('rgs', MLPClassifier(hidden_layer_sizes=(16,),
-    #                         activation='logistic',
-    #                         random_state=RANDOM_STATE,
-    #                         learning_rate_init=0.001))])
-    # mlp_class.fit(X_train, y_train)
-    #
-    # return mlp_class
     tf.random.set_seed(RANDOM_STATE)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1, random_state=RANDOM_STATE)
     scaler = StandardScaler()
@@ -77,6 +61,7 @@ def nn_class_model(X_train, y_train):
         tf.keras.layers.Dropout(0.2),
 
         tf.keras.layers.Dense(32, activation="relu", name="dense_layer3", kernel_regularizer=tf.keras.regularizers.l2(1e-4)),
+        tf.keras.layers.Dropout(0.2),
 
         tf.keras.layers.Dense(1, activation="sigmoid", name="output_layer")
     ])
@@ -89,6 +74,6 @@ def nn_class_model(X_train, y_train):
         restore_best_weights=True,
         monitor = "val_loss"
     )
-    model.fit(X_resampled, y_resampled, validation_data=(X_val_scaled, y_val), epochs=200, batch_size=32, callbacks=[early_stop])
+    history = model.fit(X_resampled, y_resampled, validation_data=(X_val_scaled, y_val), epochs=200, batch_size=32, callbacks=[early_stop])
 
-    return model
+    return model, history
