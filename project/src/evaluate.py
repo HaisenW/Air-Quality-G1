@@ -13,10 +13,30 @@ from sklearn.metrics import (
     root_mean_squared_error
 )
 from sklearn.model_selection import cross_val_score
+from sklearn.inspection import permutation_importance
 
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 
+# permutation importance
+def plot_importance(model, X_test, y_test):
+    result = permutation_importance(
+        model,
+        X_test,
+        y_test,
+        n_repeats=10,
+        random_state=RANDOM_STATE
+    )
+
+    importance = result.importances_mean
+    for i, v in enumerate(importance):
+        print(f"Feature {i}: {v}")
+
+    plt.bar(range(len(importance)), importance)
+    plt.xlabel("Feature Index")
+    plt.ylabel("Permutation Importance")
+    plt.title("Feature Importance (Permutation)")
+    plt.show()
 
 # classification metrics
 def compute_metrics(y_true, y_pred, y_score=None):
@@ -198,6 +218,7 @@ if __name__ == '__main__':
     # Decision Tree Classification
     dtc= decision_tree_classification(X_train, y_class_train)
     evaluate_model("Decision Tree Classification", dtc, X_train, y_class_train, X_test, y_class_test, class_target)
+    plot_importance(dtc, X_test, y_class_test)
 
     # NN Regression
     nn_reg_model, nn_reg_history = nn_reg_model(X_train, y_reg_train)
