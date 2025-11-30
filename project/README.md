@@ -4,7 +4,10 @@ This is the repository for a Machine Learning project.
 ## Introduction
 The task is to predict the PM2.5 concentration based on various parameters, such as dew point or temperature, and classify whether it is at a healthy level. It matters because PM2.5 is associated with various heart and lung diseases. Our goal is to determine whether an air environment is healthy for human lives.​
 
-## How To Use
+## Dataset
+[Beijing PM2.5](https://archive.ics.uci.edu/dataset/381/beijing+pm2+5+data), licensed under a CC-BY 4.0 license.
+
+## How to use
 **Prerequisites:** 
 ```
 git
