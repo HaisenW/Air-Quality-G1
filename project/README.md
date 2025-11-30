@@ -32,6 +32,7 @@ The following AI models were used for idea generation, concept clarification, an
 - Alibaba Qwen3-235B
 - OpenAI GPT5
 - Z.ai GLM-4.6
+
 Here is an example of how they were used:
 ```
 Query: How to make pip replicate the environment in a requirements.txt file?
