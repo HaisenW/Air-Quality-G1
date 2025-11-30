@@ -32,3 +32,21 @@ The following AI models were used for idea generation, concept clarification, an
 - Alibaba Qwen3-235B
 - OpenAI GPT5
 - Z.ai GLM-4.6
+Here is an example of how they were used:
+```
+Query: How to make pip replicate the environment in a requirements.txt file?
+
+Response: To replicate a Python environment using a requirements.txt file with pip, follow these steps:
+
+Generate the requirements file: In the source environment, use the command
+pip freeze > requirements.txt
+This creates a requirements.txt file listing all installed packages and their exact versions. 
+
+Install packages in the target environment: On the destination machine or in a new virtual environment, run
+pip install -r requirements.txt
+This installs all the packages listed in the file, replicating the original environment. 
+
+Use virtual environments: It is strongly recommended to use a virtual environment (e.g., created with python -m venv myenv) to avoid conflicts with system-wide packages and ensure isolation. Activate it before installing the requirements. 
+
+This method ensures reproducibility of Python environments across different systems.
+```
