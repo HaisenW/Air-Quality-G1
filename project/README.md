@@ -6,7 +6,11 @@ The task is to predict the PM2.5 concentration based on various parameters, such
 
 ## How To Use
 **Prerequisites:** 
-Git and Python.
+```
+git
+python
+pip
+```
 **Step 1:** Clone the repository
 ```
 git clone https://github.com/HaisenW/Air-Quality-G1.git
@@ -22,6 +26,6 @@ The repository is now ready for use.
 
 ## AI Usage Disclosure Statement
 The following AI models were used for idea generation, concept clarification, and basic troubleshooting:
-- OpenAI GPT5
 - Alibaba Qwen3-235B
+- OpenAI GPT5
 - Z.ai GLM-4.6
